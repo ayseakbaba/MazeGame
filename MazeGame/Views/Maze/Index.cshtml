@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Design Pattern Ödevi - Labirent Bulmaca Oyunu";
+    var rows = (int)ViewBag.Rows;
+    var cols = (int)ViewBag.Cols;
+
+    // Labirent çizim ayarları (Controller'daki ile eşleşmeli)
+    var cellSize = 20;
+    var wallThickness = 2;
+    var imgWidth = cols * cellSize + wallThickness;
+    var imgHeight = rows * cellSize + wallThickness;
+}
+<div style="min-height:50vh; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+<h3>Projede Kullanılan Design Patternler</h3>
+<ul>
+    <li>Interpreter</li>
+    <li>Visitor</li>
+</ul>
+
+<form method="get" asp-action="Index">
+    <label>Satır:</label>
+    <input type="number" name="rows" value="@rows" min="5" max="100" />
+    <label> Sütun:</label>
+    <input type="number" name="cols" value="@cols" min="5" max="100" />
+    <button type="submit">Yenile</button>
+</form>
+
+<div style="margin-top:20px;">
+    <!-- Labirent ve karakteri üst üste koyacağımız container -->
+    <div style="position: relative; width:@(imgWidth)px; height:@(imgHeight)px;">
+        <!-- 1) Labirent resmi -->
+        <img src='@Url.Action("MazeImage", new { rows, cols })'
+             width='@imgWidth' height='@imgHeight'
+             alt="Labirent" />
+
+        <!-- 2) Karakter resmi (0,0) hücresinde, Y-ekseninde 180° döndürülmüş -->
+        <img src="~/images/character.png"
+             alt="Karakter"
+             style="
+                position: absolute;
+                top: 0px;
+                left: -30px;
+                width: @(cellSize)px;
+                height: @(cellSize)px;
+                transform: rotateY(180deg);
+            " />
+    </div>
+</div>
+</div>
