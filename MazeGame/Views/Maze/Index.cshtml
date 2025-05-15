@@ -3,6 +3,166 @@
     var rows = (int)ViewBag.Rows;
     var cols = (int)ViewBag.Cols;
 
+    var cellSize = 20;
+    var wallThickness = 2;
+    var imgWidth = cols * cellSize + wallThickness;
+    var imgHeight = rows * cellSize + wallThickness;
+}
+
+<!-- Sayfa Layoutu: 3 Sütun -->
+<div style="display: flex; flex-direction: row; gap: 30px; margin: 40px 10px 0 10px; align-items: flex-start;">
+
+    <!-- 1. Sütun: BLOKLAR -->
+    <div style="width: 220px;">
+        <div class="block">if bloğu</div>
+        <div class="block">loop bloğu</div>
+        <div class="block">ilerle bloğu</div>
+        <div class="block">sağa dön bloğu</div>
+        <div class="block">sola dön bloğu</div>
+        <div class="block">arkadaşı kurtar bloğu</div>
+        <div class="block">anahtarı al bloğu</div>
+        <div class="block">kapıyı aç bloğu</div>
+    </div>
+
+    <!-- 2. Sütun: KODLAMA ALANI -->
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: stretch;">
+        <div id="codingArea" style="flex: 1; min-height: 650px; border: 2px solid red; border-radius: 10px; padding: 18px; background: #fff;">
+            <div style="text-align:center; color: red; font-weight: bold; margin-bottom:15px;">KODLAMA ALANI</div>
+            <!-- Kullanıcı blokları buraya tıklayarak ekler -->
+        </div>
+        <button id="runButton" style="margin-top: 15px; padding: 12px 0; background: #ff0000; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer;">
+            Çalıştır 🚀
+        </button>
+    </div>
+
+    <!-- 3. Sütun: MAZE -->
+    <div id="mazePanel" style="min-width: @(imgWidth + 20)px;">
+        <h3 style="text-align:center; margin-bottom: 10px;">Projede Kullanılan Design Patternler</h3>
+        <ul>
+            <li>Interpreter</li>
+            <li>Visitor</li>
+        </ul>
+        <form method="get" asp-action="Index" style="margin-bottom: 15px;">
+            <label>Satır:</label>
+            <input type="number" name="rows" value="@rows" min="5" max="100" style="width:55px;" />
+            <label> Sütun:</label>
+            <input type="number" name="cols" value="@cols" min="5" max="100" style="width:55px;" />
+            <button type="submit">Yenile</button>
+        </form>
+        <div style="position: relative; width:@(imgWidth)px; height:@(imgHeight)px; margin-top:20px;">
+            <img src='@Url.Action("MazeImage", new { rows, cols })'
+                 width='@imgWidth' height='@imgHeight'
+                 alt="Labirent" />
+
+            <img src="~/images/character.png"
+                 alt="Karakter"
+                 style="
+                    position: absolute;
+                    top: 0px;
+                    left: -30px;
+                    width: @(cellSize)px;
+                    height: @(cellSize)px;
+                    transform: rotateY(180deg);
+                " />
+        </div>
+    </div>
+</div>
+
+<!-- CSS Kodları -->
+<style>
+    .block {
+        border: 2px solid red;
+        padding: 16px;
+        margin-bottom: 18px;
+        text-align: center;
+        background: white;
+        cursor: pointer;
+        border-radius: 8px;
+        font-size: 18px;
+        user-select: none;
+        transition: box-shadow 0.2s, background 0.2s;
+    }
+
+        .block:hover {
+            box-shadow: 0 0 10px #ff000099;
+            background: #ffeaea;
+        }
+
+    #codingArea {
+        min-height: 600px;
+        border: 2px solid red;
+        padding: 15px;
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    #runButton:hover {
+        background: #b90000;
+    }
+</style>
+
+<!-- JS: Blok ekleme, çift tıkla silme, Çalıştır tuşu -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Blok ekleme
+        document.querySelectorAll('.block').forEach(block => {
+            block.addEventListener('click', function () {
+                let clone = block.cloneNode(true);
+                clone.style.marginBottom = "8px";
+                // Kodlama alanındaki bloklara çift tıkla silme özelliği
+                clone.addEventListener('dblclick', function () {
+                    clone.remove();
+                });
+                document.getElementById('codingArea').appendChild(clone);
+            });
+        });
+
+        // Kodlama alanındaki bloklara da direkt çift tıkla silme (refresh sonrası kalanlar için)
+        document.getElementById('codingArea').addEventListener('dblclick', function (e) {
+            if (e.target.classList.contains('block')) {
+                e.target.remove();
+            }
+        });
+
+        // Çalıştır butonu (servise POST isteği örneği)
+        document.getElementById('runButton').addEventListener('click', function () {
+            // Kodlama alanındaki blokların sıralı isimlerini al
+            let blocks = [];
+            document.querySelectorAll('#codingArea .block').forEach(function (b) {
+                blocks.push(b.innerText.trim());
+            });
+
+            // Burada servis çağrısı yapabilirsin (örnek: fetch, ajax)
+            // POST /api/interpreter veya bir action'a gönder
+            // Aşağıdaki kod sadece örnek ve konsola yazıyor:
+            console.log("Bloklar sırasıyla çalıştırılıyor:", blocks);
+
+            // Örnek: fetch ile API'ye gönderim
+
+        fetch('/Maze/RunBlocks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blocks: blocks }) // Obje olarak gönder!
+        })
+        .then(res => res.json())
+        .then(data => console.log(data));
+
+            //alert("Bloklar sırayla çalıştırılıyor!\n" + blocks.join("\n"));
+        });
+    });
+</script>
+
+
+
+
+
+@*
+çalışan kod. Bloklara ayrılmamış sadece mazeden oluşan yapı    
+@{
+    ViewData["Title"] = "Design Pattern Ödevi - Labirent Bulmaca Oyunu";
+    var rows = (int)ViewBag.Rows;
+    var cols = (int)ViewBag.Cols;
+
     // Labirent çizim ayarları (Controller'daki ile eşleşmeli)
     var cellSize = 20;
     var wallThickness = 2;
@@ -45,4 +205,4 @@
             " />
     </div>
 </div>
-</div>
+</div> *@
