@@ -3,11 +3,11 @@ using MazeGame.Models;
 
 namespace MazeGame.Interpreter.Expressions
 {
-    public class MoveExpression : IExpression
+    public class MoveUpExpression : IExpression
     {
         public Direction _direction;
 
-        public MoveExpression(Direction direction)
+        public MoveUpExpression(Direction direction)
         {
             _direction = direction;
         }

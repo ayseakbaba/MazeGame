@@ -55,7 +55,7 @@ namespace MazeGame.Controllers
                     Y = 0,
                     Facing = Direction.Right
                 };
-                _mazeService.SetPlayer(player); // ✅ ilk oluştuğunda da kaydet
+                _mazeService.SetPlayer(player);
             }
 
             var expressions = BlockParser.Parse(dto.Blocks);
@@ -63,20 +63,12 @@ namespace MazeGame.Controllers
 
             foreach (var expr in expressions)
             {
-                bool moved = false;
+                int oldX = player.X;
+                int oldY = player.Y;
 
-                if (expr is MoveExpression moveExpr)
-                {
-                    // MoveForward dönerken hareket etti mi etmedi mi diye bilgi veriyor
-                    moved = player.MoveForward(maze, moveExpr._direction);
-                }
-                else
-                {
-                    expr.Interpret(player, maze);
-                    moved = true; // diğer blok türleri için (turn vs.)
-                }
+                expr.Interpret(player, maze);
 
-                if (moved)
+                if (player.X != oldX || player.Y != oldY)
                 {
                     steps.Add(new
                     {
@@ -87,9 +79,9 @@ namespace MazeGame.Controllers
                 }
             }
 
-            // 🔥 Oyuncunun son halini kaydet
             _mazeService.SetPlayer(player);
             return Json(steps);
         }
+
     }
 }
