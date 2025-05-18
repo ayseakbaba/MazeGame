@@ -1,44 +1,95 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MazeGame.Models;
-using System;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using MazeGame.Generator;
 using MazeGame.Dtos;
+using MazeGame.Interpreter;
+using MazeGame.Enums;
+using MazeGame.Services;
+using MazeGame.Interpreter.Expressions;
 
 namespace MazeGame.Controllers
 {
     public class MazeController : Controller
     {
-        // Labirent boyutlarını sorgu parametresiyle alabiliriz
-        public IActionResult Index(int rows = 20, int cols = 20)
+        private readonly MazeService _mazeService;
+
+        public MazeController(MazeService mazeService)
         {
+            _mazeService = mazeService;
+        }
+
+        public IActionResult Index(int rows = 5, int cols = 5)
+        {
+            _mazeService.GenerateMaze(rows, cols);
             ViewBag.Rows = rows;
             ViewBag.Cols = cols;
             return View();
         }
 
-        // PNG olarak labirenti üretir
         [HttpGet(nameof(MazeImage))]
-        public IActionResult MazeImage(int rows = 20, int cols = 20)
+        public IActionResult MazeImage()
         {
-            var mg = new MazeGenerator(rows, cols);
-            mg.Generate();
-            var png = mg.ToPng(cellSize: 20, wallThickness: 2);
+            var generator = _mazeService.GetGenerator();
+            if (generator == null)
+                return NotFound("Maze not generated");
+
+            var png = generator.ToPng(cellSize: generator.GetGeneratorsCellSize(generator), wallThickness: 2);
             return File(png, "image/png");
         }
+
 
 
         [HttpPost]
         public IActionResult RunBlocks([FromBody] BlocksDto dto)
         {
-            if (dto == null || dto.Blocks == null)
-                return Json(new { error = "Bloklar gelmedi!" });
+            var maze = _mazeService.GetCurrentMaze();
+            if (maze == null)
+                return BadRequest("Maze not initialized");
 
-            foreach (var block in dto.Blocks)
+            var player = _mazeService.GetPlayer();
+            if (player == null)
             {
-                Console.WriteLine("Blok çalıştı: " + block);
+                player = new Player
+                {
+                    X = 0,
+                    Y = 0,
+                    Facing = Direction.Right
+                };
+                _mazeService.SetPlayer(player); // ✅ ilk oluştuğunda da kaydet
             }
-            return Json(new { ok = true });
+
+            var expressions = BlockParser.Parse(dto.Blocks);
+            var steps = new List<object>();
+
+            foreach (var expr in expressions)
+            {
+                bool moved = false;
+
+                if (expr is MoveExpression moveExpr)
+                {
+                    // MoveForward dönerken hareket etti mi etmedi mi diye bilgi veriyor
+                    moved = player.MoveForward(maze, moveExpr._direction);
+                }
+                else
+                {
+                    expr.Interpret(player, maze);
+                    moved = true; // diğer blok türleri için (turn vs.)
+                }
+
+                if (moved)
+                {
+                    steps.Add(new
+                    {
+                        x = player.X,
+                        y = player.Y,
+                        direction = player.Facing.ToString()
+                    });
+                }
+            }
+
+            // 🔥 Oyuncunun son halini kaydet
+            _mazeService.SetPlayer(player);
+            return Json(steps);
         }
     }
 }

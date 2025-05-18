@@ -1,7 +1,9 @@
-﻿using System;
+﻿using MazeGame.Models;
+using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Reflection.Emit;
 
 namespace MazeGame.Generator
 {
@@ -98,6 +100,38 @@ namespace MazeGame.Generator
             bmp.Save(ms, ImageFormat.Png);
             return ms.ToArray();
         }
+
+        public Maze ToMazeModel()
+        {
+            var maze = new Maze(_rows, _cols);
+
+            for (int r = 0; r < _rows; r++)
+            {
+                for (int c = 0; c < _cols; c++)
+                {
+                    var cell = maze.Grid[r, c];
+
+                    // Duvar verilerini doğru hücreye atıyoruz:
+                    cell.TopWall = _hWalls[r, c];
+                    cell.LeftWall = _vWalls[r, c];
+
+                    // Kenar kontrolü: son satır/son sütunda taşma olmasın
+                    cell.BottomWall = (r == _rows - 1) ? true : _hWalls[r + 1, c];
+                    cell.RightWall = (c == _cols - 1) ? true : _vWalls[r, c + 1];
+                }
+            }
+
+            return maze;
+        }
+
+
+
+        public int GetGeneratorsCellSize(MazeGenerator _generator)
+        {
+            var cellSize = _generator._rows * _generator._cols;
+            return cellSize;
+        }
+
     }
 
 }
