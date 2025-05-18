@@ -21,8 +21,10 @@ namespace MazeGame.Controllers
         public IActionResult Index(int rows = 5, int cols = 5)
         {
             _mazeService.GenerateMaze(rows, cols);
+            var maze = _mazeService.GetCurrentMaze();
             ViewBag.Rows = rows;
             ViewBag.Cols = cols;
+            ViewBag.Maze = maze;
             return View();
         }
 

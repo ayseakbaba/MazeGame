@@ -2,7 +2,7 @@
     ViewData["Title"] = "Design Pattern Ödevi - Labirent Bulmaca Oyunu";
     var rows = (int)ViewBag.Rows;
     var cols = (int)ViewBag.Cols;
-
+    var maze = ViewBag.Maze as Maze;
     var cellSize = 20;
     var wallThickness = 2;
     var imgWidth = cols * cellSize + wallThickness;
@@ -54,6 +54,25 @@
             <img src='@Url.Action("MazeImage", new { rows, cols })'
                  width='@imgWidth' height='@imgHeight'
                  alt="Labirent" />
+
+            <!-- Monster -->
+            @for (int r = 0; r < maze.Rows; r++)
+            {
+                for (int c = 0; c < maze.Columns; c++)
+                {
+                    var cell = maze.Grid[r, c];
+                    if (cell.GameObject is MazeGame.Models.GameObjects.Monster)
+                    {
+                        <img src="~/images/monster1.png"
+                             alt="Canavar"
+                             style="position: absolute;
+                            top: @(r * cellSize)px;
+                            left: @(c * cellSize)px;
+                            width: @(cellSize)px;
+                            height: @(cellSize)px;" />
+                    }
+                }
+            }
 
             <img src="~/images/character.png"
                  alt="Karakter"

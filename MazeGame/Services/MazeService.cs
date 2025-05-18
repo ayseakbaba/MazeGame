@@ -1,6 +1,7 @@
 ﻿using MazeGame.Enums;
 using MazeGame.Generator;
 using MazeGame.Models;
+using MazeGame.Models.GameObjects;
 using System.Reflection.Emit;
 
 namespace MazeGame.Services
@@ -41,6 +42,7 @@ namespace MazeGame.Services
             _currentMaze = _generator.ToMazeModel();
 
             ResetPlayer(); // yeni maze → yeni oyuncu
+            AddMonsterToMaze(); // ← bu satır buraya!
         }
 
         public Maze GetCurrentMaze()
@@ -51,6 +53,23 @@ namespace MazeGame.Services
         public MazeGenerator GetGenerator()
         {
             return _generator;
+        }
+
+        private void AddMonsterToMaze()
+        {
+            var rnd = new Random();
+            int rows = _currentMaze.Rows;
+            int cols = _currentMaze.Columns;
+
+            int mx, my;
+            do
+            {
+                mx = rnd.Next(rows);
+                my = rnd.Next(cols);
+            }
+            while ((mx == 0 && my == 0) || (mx == rows - 1 && my == cols - 1));
+
+            _currentMaze.Grid[mx, my].GameObject = new Monster();
         }
     }
 }
