@@ -9,238 +9,543 @@
     var imgHeight = rows * cellSize + wallThickness;
 }
 
-<!-- Sayfa Layoutu: 3 Sütun -->
-<div style="display: flex; flex-direction: row; gap: 30px; margin: 40px 10px 0 10px; align-items: flex-start;">
+<h1 class="title">LABİRENT ÖLÜMCÜL KAÇIŞ</h1>
 
+<div class="container">
     <!-- 1. Sütun: BLOKLAR -->
-    <div style="width: 220px;">
-@*         <div class="block">if</div>
-        <div class="block">loop</div> *@
+    <div class="blocks-column">
         <div class="block">sağ</div>
         <div class="block">sol</div>
         <div class="block">yukarı</div>
         <div class="block">aşağı</div>
-        <div class="block">vur</div>
+        <div class="block">canavarı öldür</div>
         <div class="block">anahtarı al</div>
-@*         <div class="block">arkadaşı kurtar</div>
-        
-        <div class="block">kapıyı aç</div> *@
+        <div class="block">kapıyı aç</div>
     </div>
 
     <!-- 2. Sütun: KODLAMA ALANI -->
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: stretch;">
-        <div id="codingArea" style="flex: 1; min-height: 650px; border: 2px solid red; border-radius: 10px; padding: 18px; background: #fff;">
-            <div style="text-align:center; color: red; font-weight: bold; margin-bottom:15px;">KODLAMA ALANI</div>
-            <!-- Kullanıcı blokları buraya tıklayarak ekler -->
+    <div class="coding-column">
+        <div id="codingArea">
+            <div style="text-align:center; color: #75daff; font-weight: bold; margin-bottom:15px; font-size: 18px; text-transform: uppercase; letter-spacing: 2px;">KOMUT ALANI</div>
         </div>
-        <button id="runButton" style="margin-top: 15px; padding: 12px 0; background: #ff0000; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer;">
-            Çalıştır 🚀
-        </button>
+        <button id="runButton">Çalıştır 🚀</button>
+
+        <div class="status" id="status">
+            Glade'e hoş geldin. Griever'lara yakalanmadan kaç!
+        </div>
+
     </div>
-
     <!-- 3. Sütun: MAZE -->
-    <div id="mazePanel" style="min-width: @(imgWidth + 20)px;">
-        <h3 style="text-align:center; margin-bottom: 10px;">Projede Kullanılan Design Patternler</h3>
-        <ul>
-            <li>Interpreter</li>
-            <li>Visitor</li>
-        </ul>
-        <form method="get" asp-action="Index" style="margin-bottom: 15px;">
-            <label>Satır:</label>
-            <input type="number" name="rows" value="@rows" min="5" max="100" style="width:55px;" />
-            <label> Sütun:</label>
-            <input type="number" name="cols" value="@cols" min="5" max="100" style="width:55px;" />
-            <button type="submit">Yenile</button>
-        </form>
-        <div style="position: relative; width:@(imgWidth)px; height:@(imgHeight)px; margin-top:20px;">
-            <img src='@Url.Action("MazeImage", new { rows, cols })'
-                 width='@imgWidth' height='@imgHeight'
-                 alt="Labirent" />
+    <div class="maze-column">
+        <div class="info-panel">
+            <h3>Labirentten Kaçış Oyunu Temelleri</h3>
+            <ul>
+                <li>Canavarı öldür</li>
+                <li>Anahtarı al</li>
+                <li>Kapıyı aç</li>
+            </ul>
+            <p>Üçünü de tamamlayarak labirentten kaçmalısın.</p>
+        </div>
 
-            <!-- Monster -->
-            @for (int r = 0; r < maze.Rows; r++)
-            {
-                for (int c = 0; c < maze.Columns; c++)
+        <!-- Yeni HUD -->
+        <div class="hud" style="justify-content: center;">
+            <form method="get" asp-action="Index" class="maze-form">
+                <label for="rows">Satır:</label>
+                <input type="number" name="rows" value="@rows" min="5" max="100" />
+                <label for="cols">Sütun:</label>
+                <input type="number" name="cols" value="@cols" min="5" max="100" />
+                <button type="submit" class="btn">Yenile</button>
+            </form>
+        </div>
+
+        <div class="maze-container" style="width:@(imgWidth)px; height:@(imgHeight + 20)px;">
+            <div style="position: relative; width:@(imgWidth)px; height:@(imgHeight)px;">
+                <img src='@Url.Action("MazeImage", new { rows, cols })'
+                     width='@imgWidth' height='@imgHeight'
+                     alt="Labirent" />
+                <div class="scanner-line"></div>
+
+                @for (int r = 0; r < maze.Rows; r++)
                 {
-                    var cell = maze.Grid[r, c];
-                    if (cell.GameObject is MazeGame.Models.GameObjects.Monster)
+                    for (int c = 0; c < maze.Columns; c++)
                     {
-                        <img id="monster-r@(r)-c@(c)" src="~/images/monster1.png"
-                             alt="Canavar"
-                             style="position: absolute;
-                             top: @(r * cellSize)px;
-                             left: @(c * cellSize)px;
-                             width: @(cellSize)px;
-                             height: @(cellSize)px;" />
-                    }
+                        var cell = maze.Grid[r, c];
+                        if (cell.GameObject is MazeGame.Models.GameObjects.Monster)
+                        {
+                            <img id="monster-r@(r)-c@(c)" src="~/images/monster1.png"
+                                 alt="Canavar"
+                                 style="position: absolute; top: @(r * cellSize)px; left: @(c * cellSize)px; width: @(cellSize)px; height: @(cellSize)px;" />
+                        }
 
-                    if (cell.GameObject is MazeGame.Models.GameObjects.Key)
-                    {
-                        <img id="key-r@(r)-c@(c)" src="~/images/key.png"
-                             alt="Anahtar"
-                             style="position: absolute;
-                             top: @(r * cellSize)px;
-                             left: @(c * cellSize)px;
-                             width: @(cellSize)px;
-                             height: @(cellSize)px;" />
+                        if (cell.GameObject is MazeGame.Models.GameObjects.Key)
+                        {
+                            <img id="key-r@(r)-c@(c)" src="~/images/key.png"
+                                 alt="Anahtar"
+                                 style="position: absolute; top: @(r * cellSize)px; left: @(c * cellSize)px; width: @(cellSize)px; height: @(cellSize)px;" />
+                        }
+
+                        if (cell.GameObject is MazeGame.Models.GameObjects.Door)
+                        {
+                            <img id="door-r@(r)-c@(c)" src="~/images/door.png"
+                                 alt="Kapı"
+                                 style="position: absolute; top: @(r * cellSize)px; left: @(c * cellSize)px; width: @(cellSize)px; height: @(cellSize)px;" />
+                        }
                     }
                 }
-            }
 
-            <img src="~/images/character_main.png"
-                 alt="Karakter"
-                 style="
-                    position: absolute;
-                    top: 0px;
-                    left: 0px;
-                    width: @(cellSize)px;
-                    height: @(cellSize)px;
-                    transform: rotateY(180deg);
-                " />
+                <img src="~/images/character_main.png"
+                     alt="Karakter"
+                     style="position: absolute; top: 0px; left: 0px; width: @(cellSize)px; height: @(cellSize)px; transform: rotateY(180deg);" />
+
+                <div class="death-overlay"></div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- CSS Kodları -->
+<!-- Başlangıç Modalı -->
+<div class="modal" id="startModal">
+    <div class="modal-content">
+        <h2>LABİRENT ÖLÜMCÜL KAÇIŞ</h2>
+        <p>Glade'de uyandın, hiçbir şey hatırlamıyorsun. Gece gelen Griever'lara dikkat ederek labirentten kaç.</p>
+        <div class="code-block terminal-effect">Interpreter ve Visitor tasarım deseni başlatıldı... Denek Labirent Denemesi için hazır.</div>
+        <p>Blokları sürükle, sıraya diz ve karakteri yönlendir. Griever'ı öldür, anahtarı al ve kapıdan çık.</p>
+        <button class="btn" id="startBtn">Maze'e Gir</button>
+    </div>
+</div>
+
+<!-- Oyun Kazanma Modalı -->
+<div class="modal hidden" id="victoryModal">
+    <div class="modal-content">
+        <h2>Başardın!</h2>
+        <p>Labirentten kaçmayı başardın ve testlerden sağ çıktın. Özgürlük seni bekliyor.</p>
+        <div class="code-block terminal-effect">
+            Subject demonstrates exceptional aptitude. Phase two ready.
+        </div>
+        <button class="btn" id="playAgainBtn">Tekrar Oyna</button>
+    </div>
+</div>
+
+<!-- Oyun Kaybetme Modalı -->
+<div class="modal hidden" id="gameOverModal">
+    <div class="modal-content">
+        <h2>Yakalandın!</h2>
+        <p id="gameOverMessage">Griever'lar seni yakaladı. Testin sonlandı.</p>
+        <div class="code-block terminal-effect">
+            Subject terminated. Trial data collected.
+        </div>
+        <button class="btn" id="restartBtn">Tekrar Dene</button>
+    </div>
+</div>
+
+<!-- Stil dosyası -->
 <style>
+    <link href='https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap' rel="stylesheet" >
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Orbitron', 'Courier New', monospace;
+        background-color: #0a0a0a;
+        background-image: url('https://cdnjs.cloudflare.com/ajax/libs/simple-icons/3.0.1/simple-icons.svg');
+        background-blend-mode: overlay;
+        background-size: cover;
+        color: #75daff;
+        overflow-x: hidden;
+    }
+
+    .title {
+        text-align: center;
+        margin: 20px 0;
+        font-size: 2.5rem;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        text-shadow: 0 0 10px #3694bb, 0 0 20px #3694bb;
+        color: #75daff;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: row;
+        gap: 30px;
+        align-items: flex-start;
+        max-width: 1400px;
+        margin: 0 auto; /* 💡 merkez hizalama */
+        padding: 40px 20px;
+    }
+
+    /* BLOCKS COLUMN */
+    .blocks-column {
+        width: 220px;
+    }
+
     .block {
-        border: 2px solid red;
+        border: 2px solid #75daff;
         padding: 16px;
         margin-bottom: 18px;
         text-align: center;
-        background: white;
+        background: rgba(10, 20, 30, 0.8);
         cursor: pointer;
         border-radius: 8px;
         font-size: 18px;
         user-select: none;
         transition: box-shadow 0.2s, background 0.2s;
+        color: #75daff;
     }
 
         .block:hover {
-            box-shadow: 0 0 10px #ff000099;
-            background: #ffeaea;
+            box-shadow: 0 0 10px #75daff99;
+            background: #122a36;
         }
+
+    /* CODING AREA COLUMN */
+    .coding-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
 
     #codingArea {
-        min-height: 600px;
-        border: 2px solid red;
-        padding: 15px;
+        min-height: 650px;
+        border: 2px solid #75daff;
         border-radius: 10px;
-        background: #fff;
+        padding: 18px;
+        background: rgba(10, 20, 30, 0.7);
+        margin-bottom: 15px;
     }
 
-    #runButton:hover {
-        background: #b90000;
+    #runButton {
+        margin-top: 15px;
+        padding: 12px 0;
+        background: #1e6a8a;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.3s;
     }
+
+        #runButton:hover {
+            background: #0e536f;
+            box-shadow: 0 0 15px #75daff;
+        }
+
+    /* MAZE COLUMN */
+    .maze-column {
+        min-width: 600px;
+    }
+
+    .maze-container {
+        position: relative;
+        border: 3px solid #1e6a8a;
+        background-color: #111;
+        margin: 20px 0;
+        box-shadow: 0 0 20px rgba(117, 218, 255, 0.2);
+        overflow: hidden;
+        border-radius: 5px;
+    }
+
+    .hud {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+        text-shadow: 0 0 5px #75daff;
+    }
+
+    .status {
+        text-align: center;
+        margin-top: 10px;
+        min-height: 50px;
+        padding: 10px;
+        background-color: rgba(0, 0, 0, 0.6);
+        border: 1px solid #75daff;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+    }
+
+    .modal-content {
+        background-color: #0a1520;
+        padding: 30px;
+        border: 2px solid #75daff;
+        box-shadow: 0 0 20px #75daff;
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .modal h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+        color: #fff;
+        text-transform: uppercase;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 2px;
+    }
+
+    .modal p {
+        margin-bottom: 20px;
+        font-size: 1.2rem;
+        line-height: 1.5;
+    }
+
+    .maze-form {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+        margin-bottom: 20px;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+        .maze-form label {
+            color: #75daff;
+            font-size: 14px;
+        }
+
+        .maze-form input {
+            width: 60px;
+            padding: 5px;
+            background-color: #0a1520;
+            border: 1px solid #75daff;
+            color: #75daff;
+            border-radius: 4px;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .maze-form .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+
+    .hidden {
+        display: none;
+    }
+
+    .code-block {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #0a1520;
+        border: 1px solid #1e6a8a;
+        border-left: 4px solid #75daff;
+        overflow-x: auto;
+        font-family: 'Courier New', monospace;
+    }
+
+    .terminal-effect::before {
+        content: "> ";
+        color: #75daff;
+    }
+
+    .death-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 0, 0, 0.2);
+        display: none;
+        z-index: 50;
+    }
+
+    .scanner-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 2px;
+        width: 100%;
+        background-color: #75daff;
+        box-shadow: 0 0 10px #75daff;
+        animation: scan 4s linear infinite;
+        opacity: 0.7;
+        z-index: 20;
+    }
+
+    .info-panel {
+        margin-bottom: 15px;
+        background-color: rgba(10, 20, 30, 0.7);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #1e6a8a;
+    }
+
+        .info-panel h3 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #75daff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-panel p {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .info-panel ul {
+            list-style-type: none;
+            margin-left: 20px;
+        }
+
+            .info-panel ul li {
+                margin-bottom: 5px;
+                position: relative;
+            }
+
+                .info-panel ul li:before {
+                    content: ">";
+                    position: absolute;
+                    left: -15px;
+                    color: #75daff;
+                }
+
+    .btn {
+        background: #1e6a8a;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+        margin-top: 10px;
+    }
+
+        .btn:hover {
+            background: #0e536f;
+            box-shadow: 0 0 15px #75daff;
+        }
 </style>
 
-<!-- JS: Blok ekleme, çift tıkla silme, Çalıştır tuşu -->
 <script>
-    function removeMonsterAt(x, y) {
-    const monsterId = `monster-r${y}-c${x}`; // dikkat: Grid[y,x] → r=y, c=x
-    const monster = document.getElementById(monsterId);
-    if (monster) {
-        monster.remove();
-        console.log(`👹 Monster removed from (${x}, ${y})`);
-        }
-    }
-
-    function removeKeyAt(x, y) {
-    const keyId = `key-r${y}-c${x}`; // dikkat: Grid[y,x] → r=y, c=x
-    const key = document.getElementById(keyId);
-    if (key) {
-        key.remove();
-        console.log(`👹 Key removed from (${x}, ${y})`);
-        }
-    }
-
     document.addEventListener("DOMContentLoaded", function () {
-        // Blok ekleme
+
+        // BLOK OLUŞTURMA
         document.querySelectorAll('.block').forEach(block => {
             block.addEventListener('click', function () {
                 let clone = block.cloneNode(true);
                 clone.style.marginBottom = "8px";
-                clone.addEventListener('dblclick', function () {
-                    clone.remove();
-                });
+                clone.addEventListener('dblclick', () => clone.remove());
                 document.getElementById('codingArea').appendChild(clone);
             });
         });
 
-        // Kodlama alanındaki bloklara da çift tıkla silme (refresh sonrası kalanlar için)
-        document.getElementById('codingArea').addEventListener('dblclick', function (e) {
-            if (e.target.classList.contains('block')) {
-                e.target.remove();
-            }
-        });
+        // MAZE RUN
+           document.getElementById('runButton').addEventListener('click', function () {
+        const blockElements = Array.from(document.querySelectorAll('#codingArea .block'));
+        const blockTexts = blockElements.map(b => b.innerText.trim());
 
-        // Çalıştır butonu
-        document.getElementById('runButton').addEventListener('click', function () {
-            const blockElements = Array.from(document.querySelectorAll('#codingArea .block'));
-            const blockTexts = blockElements.map(b => b.innerText.trim());
+        fetch('/Maze/RunBlocks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ blocks: blockTexts })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const character = document.querySelector('img[alt="Karakter"]');
+            let stepIndex = 0;
 
-            console.log("Bloklar sırasıyla çalıştırılıyor:", blockTexts);
+            function playStep() {
+                if (stepIndex >= data.length) return;
 
-            fetch('/Maze/RunBlocks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ blocks: blockTexts })
-            })
-            .then(res => res.json())
-            .then(data => {
-                console.log("Gelen adımlar:", data);
+                const step = data[stepIndex];
+                character.style.left = (step.x * @cellSize) + 'px';
+                character.style.top = (step.y * @cellSize) + 'px';
 
-                const cellSize = @cellSize;
-                const character = document.querySelector('#mazePanel img[alt="Karakter"]');
-                let stepIndex = 0;
-
-                function playStep() {
-                    if (stepIndex >= data.length) return;
-
-                    const step = data[stepIndex];
-
-                    // Karakter pozisyonunu güncelle
-                    character.style.left = (step.x * cellSize) + 'px';
-                    character.style.top = (step.y * cellSize) + 'px';
-
-                    // Karakter yönünü güncelle
-                    switch (step.direction.toLowerCase()) {
-                        case "left":
-                            character.style.transform = "rotateY(0deg)";
-                            break;
-                        case "right":
-                            character.style.transform = "rotateY(180deg)";
-                            break;
-                        case "up":
-                            character.style.transform = "rotate(-90deg)";
-                            break;
-                        case "down":
-                            character.style.transform = "rotate(90deg)";
-                            break;
-                    }
-
-                        // 💥 Eğer canavar öldüyse, görselini DOM'dan da sil
-                    if (step.killedMonster) {
-                        removeMonsterAt(step.x, step.y);
-                    }
-
-                                            // 💥 Eğer canavar öldüyse, görselini DOM'dan da sil
-                    if (step.takeKey) {
-                        removeKeyAt(step.x, step.y);
-                    }
-
-
-                    // 💥 Bloku DOM'dan sil
-                    if (blockElements[stepIndex]) {
-                        blockElements[stepIndex].remove();
-                    }
-
-                    stepIndex++;
-                    setTimeout(playStep, 400);
+                // Yön güncellemesi
+                switch (step.direction?.toLowerCase()) {
+                    case "left": character.style.transform = "rotateY(0deg)"; break;
+                    case "right": character.style.transform = "rotateY(180deg)"; break;
+                    case "up": character.style.transform = "rotate(-90deg)"; break;
+                    case "down": character.style.transform = "rotate(90deg)"; break;
                 }
 
-                playStep(); // Animasyonu başlat
-            });
+                if (step.killedMonster) {
+                    document.getElementById(`monster-r${step.y}-c${step.x}`)?.remove();
+                    document.getElementById('log').innerHTML += '<p>Griever öldürüldü!</p>';
+                }
+
+                if (step.takeKey) {
+                    document.getElementById(`key-r${step.y}-c${step.x}`)?.remove();
+                    document.getElementById('log').innerHTML += '<p>Anahtar alındı!</p>';
+                }
+
+                if (step.openedDoor) {
+                    document.getElementById('victoryModal').classList.remove('hidden');
+                    document.getElementById('log').innerHTML += '<p>Kapı açıldı! Labirentten kaçtın!</p>';
+                } else if (!step.openedDoor && step.x === @cols - 1 && step.y === @rows - 1) {
+                    document.getElementById('gameOverModal').classList.remove('hidden');
+                    document.getElementById('gameOverMessage').textContent = "🚪 Kapı açılmadı! Canavarı öldürüp anahtarı almalısın.";
+                }
+
+                // 🧹 Blokları sırayla sil
+                if (blockElements[stepIndex]) {
+                    blockElements[stepIndex].remove();
+                }
+                const currentBlock = document.querySelector('#codingArea .block');
+                if (currentBlock) currentBlock.remove();
+                stepIndex++;
+                setTimeout(playStep, 400);
+            }
+
+            playStep();
         });
     });
+
+
+        // 🔐 İlk kez mi giriyor? Modal durumu
+        const isFirstVisit = !localStorage.getItem("hasVisitedMazeGame");
+
+        if (isFirstVisit) {
+            document.getElementById("startModal")?.classList.remove("hidden");
+            localStorage.setItem("hasVisitedMazeGame", "true");
+        } else {
+            document.getElementById("startModal")?.classList.add("hidden");
+        }
+
+        // 🎮 Maze'e gir
+        document.getElementById("startBtn")?.addEventListener("click", () => {
+            document.getElementById("startModal")?.classList.add("hidden");
+        });
+
+        // 🔄 Tekrar deneme butonları
+        document.getElementById("restartBtn")?.addEventListener("click", () => {
+            document.getElementById("gameOverModal")?.classList.add("hidden");
+            window.location.reload();
+        });
+
+        document.getElementById("playAgainBtn")?.addEventListener("click", () => {
+            document.getElementById("victoryModal")?.classList.add("hidden");
+            window.location.reload();
+        });
+
+    });
 </script>
+

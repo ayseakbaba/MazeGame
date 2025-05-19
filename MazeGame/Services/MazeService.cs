@@ -40,6 +40,7 @@ namespace MazeGame.Services
             _generator = new MazeGenerator(rows, cols);
             _generator.Generate();
             _currentMaze = _generator.ToMazeModel();
+            _currentMaze.Grid[rows - 1, cols - 1].GameObject = new Door();
 
             ResetPlayer(); // yeni maze → yeni oyuncu
             AddMonsterToMaze(); // randonm monster atıyor labirente
@@ -91,6 +92,7 @@ namespace MazeGame.Services
 
             _currentMaze.Grid[y, x].GameObject = new Key();
         }
+
 
     }
 }

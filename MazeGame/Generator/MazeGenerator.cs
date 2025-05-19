@@ -73,8 +73,9 @@ namespace MazeGame.Generator
             int h = _rows * cellSize + wallThickness;
             using var bmp = new Bitmap(w, h);
             using var g = Graphics.FromImage(bmp);
-            g.Clear(Color.White);
-            using var pen = new Pen(Color.Black, wallThickness);
+            g.Clear(Color.FromArgb(10, 10, 10)); // Çok koyu siyah
+            using var pen = new Pen(Color.FromArgb(117, 218, 255), wallThickness); // #75daff
+
 
             // Yatay duvarlar
             for (int r = 0; r <= _rows; r++)

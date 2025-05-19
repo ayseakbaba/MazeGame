@@ -57,10 +57,10 @@ namespace MazeGame.Controllers
                     Y = 0,
                     Facing = Direction.Right
                 };
-                player.CurrentCell = maze.Grid[player.Y, player.X]; // oyuncu ilk başta 0,0 ise
+                player.CurrentCell = maze.Grid[player.Y, player.X];
                 _mazeService.SetPlayer(player);
             }
-
+            dto.Blocks.ForEach(x=> x.ToLower());
             var expressions = BlockParser.Parse(dto.Blocks);
             var steps = new List<object>();
 
@@ -71,39 +71,24 @@ namespace MazeGame.Controllers
 
                 expr.Interpret(player, maze);
 
-                if (player.X != oldX || player.Y != oldY)
-                {
-                    player.CurrentCell = maze.Grid[player.Y, player.X];
-                    steps.Add(new
-                    {
-                        x = player.X,
-                        y = player.Y,
-                        direction = player.Facing.ToString()
-                    });
-                }
-                if (expr is AttackExpression)
-                {
-                    steps.Add(new
-                    {
-                        x = player.X,
-                        y = player.Y,
-                        direction = player.Facing.ToString(),
-                        killedMonster = true, // ✅ canavar yok edildi işareti
-                        CurrentCell = maze.Grid[player.Y, player.X] // oyuncu ilk başta 0,0 ise
+                bool moved = (player.X != oldX || player.Y != oldY);
+                bool killedMonster = expr is AttackExpression;
+                bool takeKey = expr is TakeKeyExpression;
+                bool openedDoor = expr is OpenDoorExpression;
 
-                });
-                }
-                if(expr is TakeKeyExpression)
+                // 💡 Artık sadece hareket değil, tüm bloklar adım üretir
+                steps.Add(new
                 {
-                    steps.Add(new
-                    {
-                        x = player.X,
-                        y = player.Y,
-                        direction = player.Facing.ToString(),
-                        takeKey = true, 
-                        CurrentCell = maze.Grid[player.Y, player.X]
-                    });
-                }
+                    x = player.X,
+                    y = player.Y,
+                    direction = player.Facing.ToString(),
+                    killedMonster,
+                    takeKey,
+                    openedDoor
+                });
+
+                // Oyuncunun bulunduğu hücreyi güncelle
+                player.CurrentCell = maze.Grid[player.Y, player.X];
             }
 
             _mazeService.SetPlayer(player);

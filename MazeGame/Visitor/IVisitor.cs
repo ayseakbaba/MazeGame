@@ -6,6 +6,8 @@ namespace MazeGame.Visitor
     {
         void VisitMonster(Monster monster);
         void VisitKey(Key key);
+        void VisitDoor(Door door);
+
 
     }
 }
