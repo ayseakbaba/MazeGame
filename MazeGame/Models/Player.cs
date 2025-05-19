@@ -7,6 +7,9 @@ namespace MazeGame.Models
         public int X { get; set; } // sütun
         public int Y { get; set; } // satır
         public Direction Facing { get; set; } = Direction.Right; // başlangıç yönü
+        public Cell CurrentCell { get; set; }
+        public bool HasKey { get; set; } = false;
+
 
         public bool MoveForward(Maze maze, Direction direction)
         {

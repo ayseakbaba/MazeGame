@@ -42,7 +42,8 @@ namespace MazeGame.Services
             _currentMaze = _generator.ToMazeModel();
 
             ResetPlayer(); // yeni maze → yeni oyuncu
-            AddMonsterToMaze(); // ← bu satır buraya!
+            AddMonsterToMaze(); // randonm monster atıyor labirente
+            AddKeyToMaze(); // randonm key atıyor labirente
         }
 
         public Maze GetCurrentMaze()
@@ -58,18 +59,38 @@ namespace MazeGame.Services
         private void AddMonsterToMaze()
         {
             var rnd = new Random();
-            int rows = _currentMaze.Rows;
-            int cols = _currentMaze.Columns;
+            int row = _currentMaze.Rows;
+            int col = _currentMaze.Columns;
 
-            int mx, my;
+            int y, x;
             do
             {
-                mx = rnd.Next(rows);
-                my = rnd.Next(cols);
+                y = rnd.Next(row);
+                x = rnd.Next(col);
             }
-            while ((mx == 0 && my == 0) || (mx == rows - 1 && my == cols - 1));
+            while ((y == 0 && x == 0) || (y == row - 1 && x == col - 1));
 
-            _currentMaze.Grid[mx, my].GameObject = new Monster();
+            _currentMaze.Grid[y, x].GameObject = new Monster(); // 🔥 doğru yön
+
         }
+
+        private void AddKeyToMaze()
+        {
+            var rnd = new Random();
+            int y, x;
+            do
+            {
+                y = rnd.Next(_currentMaze.Rows);
+                x = rnd.Next(_currentMaze.Columns);
+            }
+            while (
+                (y == 0 && x == 0) ||
+                (y == _currentMaze.Rows - 1 && x == _currentMaze.Columns - 1) ||
+                _currentMaze.Grid[y, x].GameObject != null // aynı yere monster yerleşmiş olmasın
+            );
+
+            _currentMaze.Grid[y, x].GameObject = new Key();
+        }
+
     }
 }

@@ -57,6 +57,7 @@ namespace MazeGame.Controllers
                     Y = 0,
                     Facing = Direction.Right
                 };
+                player.CurrentCell = maze.Grid[player.Y, player.X]; // oyuncu ilk başta 0,0 ise
                 _mazeService.SetPlayer(player);
             }
 
@@ -72,11 +73,35 @@ namespace MazeGame.Controllers
 
                 if (player.X != oldX || player.Y != oldY)
                 {
+                    player.CurrentCell = maze.Grid[player.Y, player.X];
                     steps.Add(new
                     {
                         x = player.X,
                         y = player.Y,
                         direction = player.Facing.ToString()
+                    });
+                }
+                if (expr is AttackExpression)
+                {
+                    steps.Add(new
+                    {
+                        x = player.X,
+                        y = player.Y,
+                        direction = player.Facing.ToString(),
+                        killedMonster = true, // ✅ canavar yok edildi işareti
+                        CurrentCell = maze.Grid[player.Y, player.X] // oyuncu ilk başta 0,0 ise
+
+                });
+                }
+                if(expr is TakeKeyExpression)
+                {
+                    steps.Add(new
+                    {
+                        x = player.X,
+                        y = player.Y,
+                        direction = player.Facing.ToString(),
+                        takeKey = true, 
+                        CurrentCell = maze.Grid[player.Y, player.X]
                     });
                 }
             }

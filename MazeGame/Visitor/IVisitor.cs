@@ -5,5 +5,7 @@ namespace MazeGame.Visitor
     public interface IVisitor
     {
         void VisitMonster(Monster monster);
+        void VisitKey(Key key);
+
     }
 }

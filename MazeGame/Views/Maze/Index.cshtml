@@ -3,7 +3,7 @@
     var rows = (int)ViewBag.Rows;
     var cols = (int)ViewBag.Cols;
     var maze = ViewBag.Maze as Maze;
-    var cellSize = 20;
+    var cellSize = 75;
     var wallThickness = 2;
     var imgWidth = cols * cellSize + wallThickness;
     var imgHeight = rows * cellSize + wallThickness;
@@ -20,8 +20,10 @@
         <div class="block">sol</div>
         <div class="block">yukarı</div>
         <div class="block">aşağı</div>
-@*         <div class="block">arkadaşı kurtar</div>
+        <div class="block">vur</div>
         <div class="block">anahtarı al</div>
+@*         <div class="block">arkadaşı kurtar</div>
+        
         <div class="block">kapıyı aç</div> *@
     </div>
 
@@ -63,18 +65,29 @@
                     var cell = maze.Grid[r, c];
                     if (cell.GameObject is MazeGame.Models.GameObjects.Monster)
                     {
-                        <img src="~/images/monster1.png"
+                        <img id="monster-r@(r)-c@(c)" src="~/images/monster1.png"
                              alt="Canavar"
                              style="position: absolute;
-                            top: @(r * cellSize)px;
-                            left: @(c * cellSize)px;
-                            width: @(cellSize)px;
-                            height: @(cellSize)px;" />
+                             top: @(r * cellSize)px;
+                             left: @(c * cellSize)px;
+                             width: @(cellSize)px;
+                             height: @(cellSize)px;" />
+                    }
+
+                    if (cell.GameObject is MazeGame.Models.GameObjects.Key)
+                    {
+                        <img id="key-r@(r)-c@(c)" src="~/images/key.png"
+                             alt="Anahtar"
+                             style="position: absolute;
+                             top: @(r * cellSize)px;
+                             left: @(c * cellSize)px;
+                             width: @(cellSize)px;
+                             height: @(cellSize)px;" />
                     }
                 }
             }
 
-            <img src="~/images/character.png"
+            <img src="~/images/character_main.png"
                  alt="Karakter"
                  style="
                     position: absolute;
@@ -123,6 +136,24 @@
 
 <!-- JS: Blok ekleme, çift tıkla silme, Çalıştır tuşu -->
 <script>
+    function removeMonsterAt(x, y) {
+    const monsterId = `monster-r${y}-c${x}`; // dikkat: Grid[y,x] → r=y, c=x
+    const monster = document.getElementById(monsterId);
+    if (monster) {
+        monster.remove();
+        console.log(`👹 Monster removed from (${x}, ${y})`);
+        }
+    }
+
+    function removeKeyAt(x, y) {
+    const keyId = `key-r${y}-c${x}`; // dikkat: Grid[y,x] → r=y, c=x
+    const key = document.getElementById(keyId);
+    if (key) {
+        key.remove();
+        console.log(`👹 Key removed from (${x}, ${y})`);
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         // Blok ekleme
         document.querySelectorAll('.block').forEach(block => {
@@ -187,6 +218,17 @@
                             character.style.transform = "rotate(90deg)";
                             break;
                     }
+
+                        // 💥 Eğer canavar öldüyse, görselini DOM'dan da sil
+                    if (step.killedMonster) {
+                        removeMonsterAt(step.x, step.y);
+                    }
+
+                                            // 💥 Eğer canavar öldüyse, görselini DOM'dan da sil
+                    if (step.takeKey) {
+                        removeKeyAt(step.x, step.y);
+                    }
+
 
                     // 💥 Bloku DOM'dan sil
                     if (blockElements[stepIndex]) {

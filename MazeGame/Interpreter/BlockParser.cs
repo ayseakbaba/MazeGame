@@ -25,7 +25,12 @@ namespace MazeGame.Interpreter
                     case "aşağı":
                         list.Add(new MoveDownExpression(Direction.Down));
                         break;
-
+                    case "vur":
+                        list.Add(new AttackExpression());
+                        break;
+                    case "anahtarı al":
+                        list.Add(new TakeKeyExpression());
+                        break;
                     // Eski move komutu (Facing'e göre gider)
                     case "ilerle":
                         list.Add(new MoveRightExpression(Direction.Right)); // İstersen default facing'e göre
