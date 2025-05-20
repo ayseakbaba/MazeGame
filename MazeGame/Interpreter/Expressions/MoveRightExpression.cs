@@ -3,6 +3,7 @@ using MazeGame.Models;
 
 namespace MazeGame.Interpreter.Expressions
 {
+    //interpreter için terminal expressiona karşılık gelen değerdir
     public class MoveRightExpression : IExpression
     {
         public Direction _direction;

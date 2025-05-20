@@ -3,6 +3,7 @@ using MazeGame.Models;
 
 namespace MazeGame.Visitor
 {
+    //visitorda concrete visitora karşılık gelir.
     public class PlayerVisitor : IVisitor
     {
         private readonly Player _player;
@@ -14,7 +15,7 @@ namespace MazeGame.Visitor
 
         public void VisitDoor(Door door)
         {
-            if (_player.HasKey && _player.KilledMonster) // Canavar öldürüldü mü? → true yapmayı unutma!
+            if (_player.HasKey && _player.KilledMonster) // Canavar öldürüldü mü? 
             {
                 door.IsOpen = true;
                 Console.WriteLine("🚪 Kapı açıldı! 🎉 Oyunu bitirdin!");

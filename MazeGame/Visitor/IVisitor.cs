@@ -2,6 +2,7 @@
 
 namespace MazeGame.Visitor
 {
+    //visitorda visitora karşılık gelir.
     public interface IVisitor
     {
         void VisitMonster(Monster monster);

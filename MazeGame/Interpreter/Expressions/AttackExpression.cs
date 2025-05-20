@@ -3,6 +3,7 @@ using MazeGame.Visitor;
 
 namespace MazeGame.Interpreter.Expressions
 {
+    //visitorda object structure' a karşılık gelir. (acceptin yapıldığı)
     public class AttackExpression : IExpression
     {
         public void Interpret(Player player, Maze maze)

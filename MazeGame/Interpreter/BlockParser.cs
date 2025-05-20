@@ -13,6 +13,7 @@ namespace MazeGame.Interpreter
             {
                 switch (code.Trim().ToLowerInvariant())
                 {
+                    //interpreter için contexte karşılık gelen değerdir
                     case "sağ":
                         list.Add(new MoveRightExpression(Direction.Right));
                         break;

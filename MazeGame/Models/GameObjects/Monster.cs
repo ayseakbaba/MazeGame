@@ -2,6 +2,7 @@
 
 namespace MazeGame.Models.GameObjects
 {
+    //visitorda ConcreteElemente karşılık gelir.
     public class Monster : IGameObject
     {
         public bool IsAlive { get; set; } = true;
