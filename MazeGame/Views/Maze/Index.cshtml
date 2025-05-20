@@ -141,7 +141,6 @@
 <!-- Stil dosyası -->
 <style>
     <link href='https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap' rel="stylesheet" >
-
     * {
         margin: 0;
         padding: 0;
@@ -445,107 +444,183 @@
 </style>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    // Razor'dan gelen değerleri en başta bir kere JS değişkeni olarak ata
+    const cellSize = @cellSize;
+    const maxX = @cols;
+    const maxY = @rows;
 
-        // BLOK OLUŞTURMA
+    document.addEventListener("DOMContentLoaded", function () {
+        // — Başlangıç Modalı —
+        const startModal = document.getElementById("startModal");
+        const startBtn = document.getElementById("startBtn");
+
+        // Fix #1: Modal gösterimi için sessionstorage kullan (daha sürekli)
+        const hasVisited = sessionStorage.getItem("hasVisitedMazeGame");
+
+        if (!hasVisited) {
+            startModal.classList.remove("hidden");
+            sessionStorage.setItem("hasVisitedMazeGame", "true");
+        } else {
+            startModal.classList.add("hidden");
+        }
+
+        if (startBtn) {
+            startBtn.addEventListener("click", () => {
+                startModal.classList.add("hidden");
+            });
+        }
+
+        // — Blok ekleme / çift tıkla silme —
         document.querySelectorAll('.block').forEach(block => {
-            block.addEventListener('click', function () {
-                let clone = block.cloneNode(true);
+            block.addEventListener('click', () => {
+                const clone = block.cloneNode(true);
                 clone.style.marginBottom = "8px";
                 clone.addEventListener('dblclick', () => clone.remove());
                 document.getElementById('codingArea').appendChild(clone);
             });
         });
 
-        // MAZE RUN
-           document.getElementById('runButton').addEventListener('click', function () {
-        const blockElements = Array.from(document.querySelectorAll('#codingArea .block'));
-        const blockTexts = blockElements.map(b => b.innerText.trim());
+        // Kod alanındaki kopyalar için de çift-tık sil
+        document.getElementById('codingArea').addEventListener('dblclick', e => {
+            if (e.target.classList.contains('block')) e.target.remove();
+        });
 
-        fetch('/Maze/RunBlocks', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ blocks: blockTexts })
-        })
-        .then(res => res.json())
-        .then(data => {
-            const character = document.querySelector('img[alt="Karakter"]');
-            let stepIndex = 0;
+        // — Oyun akışı —
+        const runButton = document.getElementById('runButton');
+        const statusDisplay = document.getElementById('status');
 
-            function playStep() {
-                if (stepIndex >= data.length) return;
+        runButton.addEventListener('click', () => {
+            const blockElements = Array.from(document.querySelectorAll('#codingArea .block'));
+            const blockTexts = blockElements.map(b => b.innerText.trim());
 
-                const step = data[stepIndex];
-                character.style.left = (step.x * @cellSize) + 'px';
-                character.style.top = (step.y * @cellSize) + 'px';
-
-                // Yön güncellemesi
-                switch (step.direction?.toLowerCase()) {
-                    case "left": character.style.transform = "rotateY(0deg)"; break;
-                    case "right": character.style.transform = "rotateY(180deg)"; break;
-                    case "up": character.style.transform = "rotate(-90deg)"; break;
-                    case "down": character.style.transform = "rotate(90deg)"; break;
-                }
-
-                if (step.killedMonster) {
-                    document.getElementById(`monster-r${step.y}-c${step.x}`)?.remove();
-                    document.getElementById('log').innerHTML += '<p>Griever öldürüldü!</p>';
-                }
-
-                if (step.takeKey) {
-                    document.getElementById(`key-r${step.y}-c${step.x}`)?.remove();
-                    document.getElementById('log').innerHTML += '<p>Anahtar alındı!</p>';
-                }
-
-                if (step.openedDoor) {
-                    document.getElementById('victoryModal').classList.remove('hidden');
-                    document.getElementById('log').innerHTML += '<p>Kapı açıldı! Labirentten kaçtın!</p>';
-                } else if (!step.openedDoor && step.x === @cols - 1 && step.y === @rows - 1) {
-                    document.getElementById('gameOverModal').classList.remove('hidden');
-                    document.getElementById('gameOverMessage').textContent = "🚪 Kapı açılmadı! Canavarı öldürüp anahtarı almalısın.";
-                }
-
-                // 🧹 Blokları sırayla sil
-                if (blockElements[stepIndex]) {
-                    blockElements[stepIndex].remove();
-                }
-                const currentBlock = document.querySelector('#codingArea .block');
-                if (currentBlock) currentBlock.remove();
-                stepIndex++;
-                setTimeout(playStep, 400);
+            // Bloklarımız yoksa uyarı ver
+            if (blockElements.length === 0) {
+                statusDisplay.textContent = "Komut alanına blok ekleyiniz!";
+                return;
             }
 
-            playStep();
+            fetch('/Maze/RunBlocks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ blocks: blockTexts })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const character = document.querySelector('.maze-container img[alt="Karakter"]');
+                let stepIndex = 0;
+                let hasKey = false;
+                let killedMonster = false;
+                let hasEscaped = false;
+                let allStepsCompleted = false;
+
+                function updateStatus(message) {
+                    statusDisplay.textContent = message;
+                }
+
+                // Fix #2: Sadece işlenen bloğu kaldır, diğerlerine dokuma
+                function removeProcessedBlock(index) {
+                    if (blockElements[index]) {
+                        blockElements[index].remove();
+                    }
+                }
+
+                function playStep() {
+                    if (stepIndex >= data.length) {
+                        allStepsCompleted = true;
+
+                        // Fix #3: Adımlar bitti ama kaçmadık
+                        if (!hasEscaped) {
+                            // Sadece kapı komutunu kullanmadığı için oyun sonlanmadı
+                            updateStatus("Tüm komutları tamamladın. Kapıyı açman gerekiyor!");
+                        }
+                        return;
+                    }
+
+                    const step = data[stepIndex];
+
+                    // 1) Hareket
+                    character.style.left = (step.x * cellSize) + 'px';
+                    character.style.top = (step.y * cellSize) + 'px';
+
+                    // 2) Yön
+                    switch (step.direction.toLowerCase()) {
+                        case "left": character.style.transform = "rotateY(0deg)"; break;
+                        case "right": character.style.transform = "rotateY(180deg)"; break;
+                        case "up": character.style.transform = "rotate(-90deg)"; break;
+                        case "down": character.style.transform = "rotate(90deg)"; break;
+                    }
+
+                    // 3) Canavar öldürme işlemi
+                    if (step.killedMonster) {
+                        const m = document.getElementById(`monster-r${step.y}-c${step.x}`);
+                        if (m) {
+                            m.remove();
+                            killedMonster = true;
+                            updateStatus("Griever'ı öldürdün! Şimdi anahtarı bul.");
+                        }
+                    }
+
+                    // 4) Anahtar alındı mı?
+                    if (step.takeKey) {
+                        const k = document.getElementById(`key-r${step.y}-c${step.x}`);
+                        if (k) {
+                            k.remove();
+                            hasKey = true;
+                            updateStatus("Anahtarı buldun! Şimdi kapıyı açabilirsin.");
+                        }
+                    }
+
+                    // 5) Kapı açıldı mı?
+                    // Fix #4: Kapı kontrolü için tüm gereklilikleri kontrol et
+                    if (step.openedDoor) {
+                        if (hasKey && killedMonster) {
+                            hasEscaped = true;
+                            updateStatus("Kapı açıldı! Labirentten kaçtın!");
+                            document.getElementById('victoryModal').classList.remove('hidden');
+                            return; // Kazandıysa animasyonu durdur
+                        } else {
+                            // Koşullar sağlanmadan kapıyı açamaz
+                            let errorMessage = "Kapıyı açamadın! ";
+                            if (!hasKey) errorMessage += "Anahtarı bulmalısın. ";
+                            if (!killedMonster) errorMessage += "Griever'ı öldürmelisin.";
+
+                            updateStatus(errorMessage);
+                            document.getElementById('gameOverModal').classList.remove('hidden');
+                            document.getElementById('gameOverMessage').textContent = errorMessage;
+                            return; // Bu durumda da animasyonu durdur
+                        }
+                    }
+
+                    // 6) Bu adımda çıkışa geldi isek uyarı
+                    if (step.x === maxX-1 && step.y === maxY-1 && !hasEscaped) {
+                        let warningMsg = "Kapı komutunu çalıştırmalısın! ";
+                        if (!hasKey) warningMsg += "Anahtarı bulmalısın. ";
+                        if (!killedMonster) warningMsg += "Griever'ı öldürmelisin.";
+
+                        updateStatus(warningMsg);
+                    }
+
+                    // Her adımda sadece o adımı temsil eden bloğu sil
+                    removeProcessedBlock(stepIndex);
+
+                    // Sonraki adıma geç
+                    stepIndex++;
+                    setTimeout(playStep, 400);
+                }
+
+                playStep();
+            });
         });
-    });
 
-
-        // 🔐 İlk kez mi giriyor? Modal durumu
-        const isFirstVisit = !localStorage.getItem("hasVisitedMazeGame");
-
-        if (isFirstVisit) {
-            document.getElementById("startModal")?.classList.remove("hidden");
-            localStorage.setItem("hasVisitedMazeGame", "true");
-        } else {
-            document.getElementById("startModal")?.classList.add("hidden");
-        }
-
-        // 🎮 Maze'e gir
-        document.getElementById("startBtn")?.addEventListener("click", () => {
-            document.getElementById("startModal")?.classList.add("hidden");
-        });
-
-        // 🔄 Tekrar deneme butonları
+        // — Tekrar oynama butonları —
         document.getElementById("restartBtn")?.addEventListener("click", () => {
-            document.getElementById("gameOverModal")?.classList.add("hidden");
+            document.getElementById("gameOverModal").classList.add("hidden");
             window.location.reload();
         });
 
         document.getElementById("playAgainBtn")?.addEventListener("click", () => {
-            document.getElementById("victoryModal")?.classList.add("hidden");
+            document.getElementById("victoryModal").classList.add("hidden");
             window.location.reload();
         });
-
     });
 </script>
-
